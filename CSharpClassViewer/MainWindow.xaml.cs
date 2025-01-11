@@ -42,7 +42,7 @@ namespace CSharpClassViewer
 
             CSharpFile csClass = new CSharpFile();
             csClass.Load(odlgTextFile.FileName);
-
+            csClass.Parse();
         }
     }
 }

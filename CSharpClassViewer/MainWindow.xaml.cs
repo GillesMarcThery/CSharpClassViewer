@@ -40,9 +40,9 @@ namespace CSharpClassViewer
             if (odlgTextFile.ShowDialog() == false)
                 return;
 
-            CSharpFile csClass = new CSharpFile();
-            csClass.Load(odlgTextFile.FileName);
-            csClass.Parse();
+            CSharpFile csf = new CSharpFile();
+            csf.Load(odlgTextFile.FileName);
+            csf.Parse();
         }
     }
 }

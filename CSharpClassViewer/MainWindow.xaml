@@ -1,0 +1,32 @@
+﻿<Window x:Class="CSharpClassViewer.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:CSharpClassViewer"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="450" Width="800">
+    <DockPanel>
+        <Menu x:Name="menu" DockPanel.Dock="Top">
+            <MenuItem Header="File">
+                <MenuItem Header="_Open File" Click="OpenFile_Click" />
+                <MenuItem Name="MenuItem_Save_File" Header="_Save File" />
+                <MenuItem Name="MenuItem_SaveAs_File" Header="_SaveAs File"  />
+                <Separator />
+                <MenuItem Header="Recent" x:Name="menuItem_recents_Files" />
+                <Separator />
+                <MenuItem Header="_Exit" />
+            </MenuItem>
+            <MenuItem Header="_Parameters">
+                <MenuItem Header="_Iterations" />
+            </MenuItem>
+            <MenuItem Header="_About">
+            </MenuItem>
+        </Menu>
+        <TreeView x:Name="treeView" MinWidth="200" />
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" CanContentScroll="True">
+            <TextBox x:Name="textBox" FontFamily="Courier New" FontSize="12" />
+        </ScrollViewer>
+    </DockPanel>
+
+</Window>

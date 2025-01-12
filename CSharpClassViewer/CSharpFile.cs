@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Configuration;
 using System.Diagnostics;
 using System.IO;
@@ -140,6 +141,10 @@ namespace CSharpClassViewer
                     continue;
                 if (line.Substring(0, 2) == "//")
                     continue;
+                if (line[0] == '[')
+                    continue;
+                if (line[0] == '#')
+                    continue;
 
                 retour = ParseLine(line, currentClass);
                 if (retour.isNameSpace)
@@ -161,19 +166,38 @@ namespace CSharpClassViewer
                 if (retour.isProperty)
                 {
                     currentClass.properties.Add(new Property(retour.access, retour.type, retour.name));
+                    SkipBloc(line, reader);
                     continue;
                 }
                 if (retour.isConstructor)
                 {
                     currentClass.constructor = new Constructor(retour.access, retour.name);
+                    SkipBloc(line, reader);
                     continue;
                 }
                 if (retour.isMethod)
                 {
                     currentClass.methods.Add(new Method(retour.access, retour.type, retour.name));
+                    SkipBloc(line, reader);
                     continue;
                 }
             }
+        }
+        void SkipBloc(string line, StringReader reader)
+        {
+            int countOpen = 0;
+            do
+            {
+                if (line.Contains('{'))
+                    countOpen += line.Count(f => f == '{');
+                if (line.Contains('}'))
+                {
+                    countOpen -= line.Count(f => f == '}');
+                    if (countOpen == 0) return;
+                }
+                line = reader.ReadLine();
+                Debug.WriteLine(line);
+            } while (line != null);
         }
         public struct LineStruct
         {
@@ -278,17 +302,32 @@ namespace CSharpClassViewer
                 }
             }
             // Field
-            if (collection[0].Contains(';'))
+            if (s.Contains(';'))
             {
                 retour.isField = true;
-                retour.name = collection[0].Split(';')[0];
+                if (retour.type == null)
+                {
+                    retour.type = collection[0];
+                    retour.name = collection[1].Split(';')[0];
+                }
+                else
+                    retour.name = collection[0].Split(';')[0];
                 return retour;
             }
             // Property
             retour.isProperty = true;
-            retour.name = collection[0];
+            if (retour.type == null)
+            {
+                retour.type = collection[0];
+                retour.name = collection[1].Split(';')[0];
+            }
+            else
+                retour.name = collection[0].Split(';')[0];
             return retour;
         }
-        // TODO passer le corps des méthodes
+        // TODO 
+//        public bool IsDisposed { get { return isDisposed; } private set { isDisposed = value; } }
+//        public event PropertyChangedEventHandler PropertyChanged;
+//        Methode de même nom
     }
 }

@@ -6,6 +6,7 @@ using System.Configuration;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -98,7 +99,7 @@ namespace CSharpClassViewer
         private string? fileContents;
         string current_namespace;
         CSharpClass currentClass = new("", "", "");
-        List<CSharpClass> myClasses = [];
+        public List<CSharpClass> myClasses = [];
         public bool Load(string filename)
         {
             TextReader reader;
@@ -137,7 +138,7 @@ namespace CSharpClassViewer
                 if (line.Contains("//"))
                     line = line.Substring(0, line.IndexOf("//"));
                 line = line.Trim();
-                Debug.WriteLine(line);
+                //Debug.WriteLine(line);
 
                 if (line.Length < 2)
                     continue;
@@ -177,11 +178,19 @@ namespace CSharpClassViewer
                 }
                 if (retour.isMethod)
                 {
-                    currentClass.methods.Add(new Method(retour.access, retour.type, retour.name));
+                    if (!MethodExists(retour.name))
+                        currentClass.methods.Add(new Method(retour.access, retour.type, retour.name));
                     SkipBloc(line, reader);
                     continue;
                 }
             }
+        }
+        bool MethodExists(string name)
+        {
+            foreach (Method m in currentClass.methods)
+                if (m.name == name)
+                    return true;
+            return false;
         }
         void SkipBloc(string line, StringReader reader)
         {
@@ -196,7 +205,7 @@ namespace CSharpClassViewer
                     if (countOpen == 0) return;
                 }
                 line = reader.ReadLine();
-                Debug.WriteLine(line);
+                //Debug.WriteLine(line);
             } while (line != null);
         }
         public struct LineStruct
@@ -255,7 +264,7 @@ namespace CSharpClassViewer
             if (collection.Contains("namespace"))
             {
                 retour.isNameSpace = true;
-                collection.Remove("namespace");
+                retour.name = collection[1];
                 return retour;
             }
             if (collection.Contains("static"))
@@ -334,8 +343,8 @@ namespace CSharpClassViewer
             return retour;
         }
         // TODO 
-//        public bool IsDisposed { get { return isDisposed; } private set { isDisposed = value; } }
-//        public event PropertyChangedEventHandler PropertyChanged;
-//        Methode de même nom
+        //        public bool IsDisposed { get { return isDisposed; } private set { isDisposed = value; } }
+        //        public event PropertyChangedEventHandler PropertyChanged;
+        //        Methode de même nom
     }
 }

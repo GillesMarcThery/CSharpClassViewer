@@ -1,4 +1,6 @@
 ﻿using Microsoft.Win32;
+using System.Diagnostics;
+using System.IO;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -111,6 +113,51 @@ namespace CSharpClassViewer
                 }
                 //if (n.Nodes.Count > 0)
                 //    Buildtreeview(item, n);
+            }
+        }
+
+        private void OpenDirectory_Click(object sender, RoutedEventArgs e)
+        {
+            string[] allfiles;
+            List<CSharpFile> mycSharpFiles = [];
+
+            var folderDialog = new OpenFolderDialog
+            {
+                Title = "Select Folder",
+                InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)
+            };
+
+            if (folderDialog.ShowDialog() == true)
+            {
+                var folderName = folderDialog.FolderName;
+                //MessageBox.Show($"You picked ${folderName}!");
+                allfiles = Directory.GetFiles(folderName, "*.cs", SearchOption.AllDirectories);
+                foreach (string filename in allfiles)
+                {
+                    Debug.WriteLine(filename);
+                    CSharpFile csf = new();
+                    csf.Load(filename);
+                    csf.Parse();
+                    mycSharpFiles.Add(csf);
+                }
+                // RAZ treeview
+                treeView.Items.Clear();
+
+                // Création de la racine du TreeView
+                TreeViewItem TV_root = new();
+                TV_root.Header = folderName;
+                treeView.Items.Add(TV_root);
+
+                foreach (CSharpFile csf in mycSharpFiles)
+                {
+                    // Création de la racine du TreeView
+                    TreeViewItem TV_File = new();
+                    TV_File.Header = csf.filename.Split('\\').Last();
+                    //TV_root.MouseRightButtonDown += TV_Item_MouseRightButtonDown;
+                    TV_root.Items.Add(TV_File);
+                    // Et on contruit l'arbre
+                    Buildtreeview(TV_File, csf.myClasses);
+                }
             }
         }
     }

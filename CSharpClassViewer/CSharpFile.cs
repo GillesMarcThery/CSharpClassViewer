@@ -97,6 +97,7 @@ namespace CSharpClassViewer
     public class CSharpFile
     {
         private string? fileContents;
+        public string filename;
         string current_namespace;
         CSharpClass currentClass = new("", "", "");
         public List<CSharpClass> myClasses = [];
@@ -105,6 +106,7 @@ namespace CSharpClassViewer
             TextReader reader;
             fileContents = "";
 
+            this.filename = filename;
             try
             {
                 reader = new StreamReader(filename);
@@ -143,7 +145,10 @@ namespace CSharpClassViewer
                 if (line.Length < 2)
                     continue;
                 if (line[0] == '[')
+                {
+                    SkipBloc(line, '[', ']', reader);
                     continue;
+                }
                 if (line[0] == '#')
                     continue;
 
@@ -167,20 +172,20 @@ namespace CSharpClassViewer
                 if (retour.isProperty)
                 {
                     currentClass.properties.Add(new Property(retour.access, retour.type, retour.name));
-                    SkipBloc(line, reader);
+                    SkipBloc(line, '{', '}', reader);
                     continue;
                 }
                 if (retour.isConstructor)
                 {
                     currentClass.constructor = new Constructor(retour.access, retour.name);
-                    SkipBloc(line, reader);
+                    SkipBloc(line, '{', '}', reader);
                     continue;
                 }
                 if (retour.isMethod)
                 {
                     if (!MethodExists(retour.name))
                         currentClass.methods.Add(new Method(retour.access, retour.type, retour.name));
-                    SkipBloc(line, reader);
+                    SkipBloc(line, '{', '}', reader);
                     continue;
                 }
             }
@@ -192,14 +197,14 @@ namespace CSharpClassViewer
                     return true;
             return false;
         }
-        void SkipBloc(string line, StringReader reader)
+        void SkipBloc(string line, char begin, char end, StringReader reader)
         {
             int countOpen = 0;
             do
             {
-                if (line.Contains('{'))
-                    countOpen += line.Count(f => f == '{');
-                if (line.Contains('}'))
+                if (line.Contains(begin))
+                    countOpen += line.Count(f => f == begin);
+                if (line.Contains(end))
                 {
                     countOpen -= line.Count(f => f == '}');
                     if (countOpen == 0) return;
@@ -301,7 +306,7 @@ namespace CSharpClassViewer
                 retour.name = collection[0];
                 return retour;
             }
-            // Constructeur ou Méthode
+            // Constructeur ou Méthode de type standard
             if (collection[0].Contains('('))
             {
                 string tmp = collection[0].Split('(')[0];
@@ -318,6 +323,16 @@ namespace CSharpClassViewer
                     return retour;
                 }
             }
+            // Méthode de type non standard
+            if (collection.Count > 1)
+                if (collection[1].Contains('('))
+                {
+                    string tmp = collection[1].Split('(')[0];
+                    retour.isMethod = true;
+                    retour.type = collection[0];
+                    retour.name = tmp;
+                    return retour;
+                }
             // Field
             if (s.EndsWith(';'))
             {

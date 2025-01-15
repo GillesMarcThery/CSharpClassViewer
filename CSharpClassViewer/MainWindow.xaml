@@ -10,6 +10,7 @@
         <Menu x:Name="menu" DockPanel.Dock="Top">
             <MenuItem Header="File">
                 <MenuItem Header="_Open File" Click="OpenFile_Click" />
+                <MenuItem Header="_Open Directory" Click="OpenDirectory_Click" />
                 <MenuItem Name="MenuItem_Save_File" Header="_Save File" />
                 <MenuItem Name="MenuItem_SaveAs_File" Header="_SaveAs File"  />
                 <Separator />

@@ -134,12 +134,12 @@ namespace CSharpClassViewer
             {
 
                 line = Regex.Replace(line, @"\s+", " ");
+                if (line.Contains("//"))
+                    line = line.Substring(0, line.IndexOf("//"));
                 line = line.Trim();
                 Debug.WriteLine(line);
 
                 if (line.Length < 2)
-                    continue;
-                if (line.Substring(0, 2) == "//")
                     continue;
                 if (line[0] == '[')
                     continue;
@@ -207,6 +207,7 @@ namespace CSharpClassViewer
             public bool isConstructor;
             public bool isField;
             public bool isReadonly;
+            public bool isEvent;
             public bool isClass;
             public bool isMethod;
             public string access;
@@ -267,6 +268,13 @@ namespace CSharpClassViewer
                 retour.isReadonly = true;
                 collection.Remove("readonly");
             }
+            if (collection.Contains("event"))
+            {
+                retour.isEvent = true;
+                retour.type = collection[0];
+                retour.name = collection[1];
+                return retour;
+            }
             if (SearchAccess(collection, out index))
             {
                 retour.access = collection[index];
@@ -302,7 +310,7 @@ namespace CSharpClassViewer
                 }
             }
             // Field
-            if (s.Contains(';'))
+            if (s.EndsWith(';'))
             {
                 retour.isField = true;
                 if (retour.type == null)

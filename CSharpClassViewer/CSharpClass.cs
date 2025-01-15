@@ -6,6 +6,22 @@ using System.Threading.Tasks;
 
 namespace CSharpClassViewer
 {
+    public struct Event
+    {
+        public string name;
+        public string access;
+        public string type;
+        public Event(string access, string type, string name)
+        {
+            this.name = name;
+            this.access = access;
+            this.type = type;
+        }
+        public override string ToString()
+        {
+            return access + " " + type + " " + name;
+        }
+    }
     public struct Property
     {
         public string name;
@@ -73,6 +89,7 @@ namespace CSharpClassViewer
         public string myNamespace;
         public string name;
         public string access;
+        public List<Event> events = [];
         public List<Field> fields = [];
         public List<Property> properties = [];
         public Constructor constructor;

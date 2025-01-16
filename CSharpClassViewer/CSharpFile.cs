@@ -99,8 +99,10 @@ namespace CSharpClassViewer
         private string? fileContents;
         public string filename;
         string current_namespace;
-        CSharpClass currentClass = new("", "", "");
+        CSharpClass currentClass;
+        CSharpStruct currentStruct;
         public List<CSharpClass> myClasses = [];
+        public List<CSharpStruct> myStructs = [];
         public bool Load(string filename)
         {
             TextReader reader;
@@ -135,12 +137,11 @@ namespace CSharpClassViewer
             using StringReader reader = new(fileContents);
             while ((line = reader.ReadLine()) != null)
             {
-
                 line = Regex.Replace(line, @"\s+", " ");
                 if (line.Contains("//"))
                     line = line.Substring(0, line.IndexOf("//"));
                 line = line.Trim();
-                //Debug.WriteLine(line);
+                Debug.WriteLine(line);
 
                 if (line.Length < 2)
                     continue;
@@ -151,6 +152,8 @@ namespace CSharpClassViewer
                 }
                 if (line[0] == '#')
                     continue;
+                if (line.StartsWith("using"))
+                    continue;
 
                 retour = ParseLine(line, currentClass);
                 if (retour.isNameSpace)
@@ -158,33 +161,58 @@ namespace CSharpClassViewer
                     current_namespace = retour.name;
                     continue;
                 }
+                if (retour.isEnum)
+                {
+                    SkipBloc(line, '{', '}', reader);
+                    continue;
+                }
                 if (retour.isClass)
                 {
-                    currentClass = new CSharpClass(current_namespace, retour.name, retour.access);
+                    currentClass = new CSharpClass(current_namespace, retour.name, retour.access, retour.isPartial);
                     myClasses.Add(currentClass);
+                    continue;
+                }
+                if (retour.isStruct)
+                {
+                    currentStruct = new CSharpStruct(current_namespace, retour.name, retour.access, retour.isPartial);
+                    myStructs.Add(currentStruct);
                     continue;
                 }
                 if (retour.isField)
                 {
-                    currentClass.fields.Add(new Field(retour.access, retour.type, retour.name));
+                    if (currentClass != null)
+                        currentClass.fields.Add(new Field(retour.access, retour.type, retour.name, retour.isConst));
+                    else
+                        currentStruct.fields.Add(new Field(retour.access, retour.type, retour.name, retour.isConst));
                     continue;
                 }
                 if (retour.isProperty)
                 {
-                    currentClass.properties.Add(new Property(retour.access, retour.type, retour.name));
+                    if (currentClass != null)
+                        currentClass.properties.Add(new Property(retour.access, retour.type, retour.name));
+                    else
+                        currentStruct.properties.Add(new Property(retour.access, retour.type, retour.name));
                     SkipBloc(line, '{', '}', reader);
                     continue;
                 }
                 if (retour.isConstructor)
                 {
-                    currentClass.constructor = new Constructor(retour.access, retour.name);
+                    if (currentClass != null)
+                        currentClass.constructor = new Constructor(retour.access, retour.name);
+                    else
+                        currentStruct.constructor = new Constructor(retour.access, retour.name);
                     SkipBloc(line, '{', '}', reader);
                     continue;
                 }
                 if (retour.isMethod)
                 {
-                    if (!MethodExists(retour.name))
-                        currentClass.methods.Add(new Method(retour.access, retour.type, retour.name));
+                    if (currentClass != null)
+                    {
+                        if (!MethodExists(retour.name))
+                            currentClass.methods.Add(new Method(retour.access, retour.type, retour.name));
+                    }
+                    else
+                        currentStruct.methods.Add(new Method(retour.access, retour.type, retour.name));
                     SkipBloc(line, '{', '}', reader);
                     continue;
                 }
@@ -206,7 +234,7 @@ namespace CSharpClassViewer
                     countOpen += line.Count(f => f == begin);
                 if (line.Contains(end))
                 {
-                    countOpen -= line.Count(f => f == '}');
+                    countOpen -= line.Count(f => f == end);
                     if (countOpen == 0) return;
                 }
                 line = reader.ReadLine();
@@ -223,7 +251,11 @@ namespace CSharpClassViewer
             public bool isReadonly;
             public bool isEvent;
             public bool isClass;
+            public bool isStruct;
             public bool isMethod;
+            public bool isPartial;
+            public bool isConst;
+            public bool isEnum;
             public string access;
             public string type;
             public string name;
@@ -282,6 +314,16 @@ namespace CSharpClassViewer
                 retour.isReadonly = true;
                 collection.Remove("readonly");
             }
+            if (collection.Contains("partial"))
+            {
+                retour.isPartial = true;
+                collection.Remove("partial");
+            }
+            if (collection.Contains("const"))
+            {
+                retour.isConst = true;
+                collection.Remove("const");
+            }
             if (collection.Contains("event"))
             {
                 retour.isEvent = true;
@@ -302,8 +344,19 @@ namespace CSharpClassViewer
             if (collection.Contains("class"))
             {
                 retour.isClass = true;
-                collection.Remove("class");
-                retour.name = collection[0];
+                retour.name = collection[1];
+                return retour;
+            }
+            if (collection.Contains("enum"))
+            {
+                retour.isEnum = true;
+                retour.name = collection[1];
+                return retour;
+            }
+            if (collection.Contains("struct"))
+            {
+                retour.isStruct = true;
+                retour.name = collection[1];
                 return retour;
             }
             // Constructeur ou Méthode de type standard
@@ -356,6 +409,10 @@ namespace CSharpClassViewer
             else
                 retour.name = collection[0].Split(';')[0];
             return retour;
+        }
+        public override string ToString()
+        {
+            return filename + "(" + myStructs.Count + " structs;  " + myClasses.Count + " class)";
         }
         // TODO 
         //        public bool IsDisposed { get { return isDisposed; } private set { isDisposed = value; } }

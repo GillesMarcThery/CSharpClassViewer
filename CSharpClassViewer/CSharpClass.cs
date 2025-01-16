@@ -43,11 +43,13 @@ namespace CSharpClassViewer
         public string name;
         public string access;
         public string type;
-        public Field(string access, string type, string name)
+        public bool isConst;
+        public Field(string access, string type, string name, bool isConst)
         {
             this.name = name;
             this.access = access;
             this.type = type;
+            this.isConst = isConst;
         }
         public override string ToString()
         {
@@ -89,16 +91,41 @@ namespace CSharpClassViewer
         public string myNamespace;
         public string name;
         public string access;
+        public bool isPartial = false;
         public List<Event> events = [];
         public List<Field> fields = [];
         public List<Property> properties = [];
         public Constructor constructor;
         public List<Method> methods = [];
-        public CSharpClass(string myNamespace, string name, string access)
+        public CSharpClass(string myNamespace, string name, string access, bool partial)
         {
             this.myNamespace = myNamespace;
             this.name = name;
             this.access = access;
+            this.isPartial = partial;
+        }
+        public override string ToString()
+        {
+            return access + " " + name;
+        }
+    }
+    public class CSharpStruct
+    {
+        public string myNamespace;
+        public string name;
+        public string access;
+        public bool isPartial = false;
+        public List<Event> events = [];
+        public List<Field> fields = [];
+        public List<Property> properties = [];
+        public Constructor constructor;
+        public List<Method> methods = [];
+        public CSharpStruct(string myNamespace, string name, string access, bool partial)
+        {
+            this.myNamespace = myNamespace;
+            this.name = name;
+            this.access = access;
+            this.isPartial = partial;
         }
         public override string ToString()
         {

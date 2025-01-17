@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Configuration;
+using System.Data.SqlTypes;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -18,91 +19,14 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace CSharpClassViewer
 {
-    //string[]={"abstract", "as","base","bool"
-    //"break"
-    //"byte"
-    //"case"
-    //"catch"
-    //"char"
-    //"checked"
-    //"class"
-    //"const"
-    //"continue"
-    //"decimal"
-    //"default"
-    //"delegate"
-    //"do"
-    //"double"
-    //"else"
-    //"enum"
-    //"event"
-    //"explicit"
-    //"extern"
-    //"false"
-    //"finally"
-    //"fixed"
-    //"float"
-    //"for"
-    //"foreach"
-    //"goto"
-    //"if"
-    //"implicite
-    //"in
-    //"int
-    //"interface
-    //"internal
-    //"is
-    //"lock
-    //"long
-    //"namespace
-    //"new
-    //"null
-    //"object
-    //"operator
-    //"out
-    //"override
-    //"params
-    //"private
-    //"protected
-    //"public
-    //"readonly
-    //"ref
-    //return
-    //"sbyte
-    //"sealed
-    //"short
-    //"sizeof
-    //"stackalloc
-
-    //"static
-    //"string
-    //"struct
-    //"switch
-    //"this
-    //"throw
-    //"true
-    //"try
-    //"typeof
-    //"uint
-    //"ulong
-    //"unchecked
-    //"unsafe
-    //"ushort
-    //"using
-    //"virtual
-    //"void
-    //"volatile
-    //"while
-    //}
     public class CSharpFile
     {
         private string? fileContents;
         public string filename;
         string current_namespace;
-        CSharpClass currentClass;
-        CSharpStruct currentStruct;
-        public List<CSharpClass> myClasses = [];
-        public List<CSharpStruct> myStructs = [];
+        CSharpClassOrStruct current;
+        public List<CSharpClassOrStruct> myClasses = [];
+        public List<CSharpClassOrStruct> myStructs = [];
         public bool Load(string filename)
         {
             TextReader reader;
@@ -155,7 +79,7 @@ namespace CSharpClassViewer
                 if (line.StartsWith("using"))
                     continue;
 
-                retour = ParseLine(line, currentClass);
+                retour = ParseLine(line, current);
                 if (retour.isNameSpace)
                 {
                     current_namespace = retour.name;
@@ -168,51 +92,45 @@ namespace CSharpClassViewer
                 }
                 if (retour.isClass)
                 {
-                    currentClass = new CSharpClass(current_namespace, retour.name, retour.access, retour.isPartial);
-                    myClasses.Add(currentClass);
+                    current = new CSharpClassOrStruct(MetaType.Class, current_namespace, retour.name, retour.access, retour.isPartial);
+                    myClasses.Add(current);
                     continue;
                 }
                 if (retour.isStruct)
                 {
-                    currentStruct = new CSharpStruct(current_namespace, retour.name, retour.access, retour.isPartial);
-                    myStructs.Add(currentStruct);
+                    current = new CSharpClassOrStruct(MetaType.Struct, current_namespace, retour.name, retour.access, retour.isPartial);
+                    myStructs.Add(current);
                     continue;
                 }
                 if (retour.isField)
                 {
-                    if (currentClass != null)
-                        currentClass.fields.Add(new Field(retour.access, retour.type, retour.name, retour.isConst));
-                    else
-                        currentStruct.fields.Add(new Field(retour.access, retour.type, retour.name, retour.isConst));
+                    if (current != null)
+                        current.fields.Add(new Field(retour.access, retour.type, retour.name, retour.isConst));
                     continue;
                 }
                 if (retour.isProperty)
                 {
-                    if (currentClass != null)
-                        currentClass.properties.Add(new Property(retour.access, retour.type, retour.name));
-                    else
-                        currentStruct.properties.Add(new Property(retour.access, retour.type, retour.name));
+                    if (current != null)
+                        current.properties.Add(new Property(retour.access, retour.type, retour.name));
                     SkipBloc(line, '{', '}', reader);
                     continue;
                 }
                 if (retour.isConstructor)
                 {
-                    if (currentClass != null)
-                        currentClass.constructor = new Constructor(retour.access, retour.name);
-                    else
-                        currentStruct.constructor = new Constructor(retour.access, retour.name);
+                    if (current != null)
+                        current.constructor = new Constructor(retour.access, retour.name);
                     SkipBloc(line, '{', '}', reader);
                     continue;
                 }
                 if (retour.isMethod)
                 {
-                    if (currentClass != null)
+                    if (current != null)
                     {
                         if (!MethodExists(retour.name))
-                            currentClass.methods.Add(new Method(retour.access, retour.type, retour.name));
+                            current.methods.Add(new Method(retour.access, retour.type, retour.name));
                     }
                     else
-                        currentStruct.methods.Add(new Method(retour.access, retour.type, retour.name));
+                        current.methods.Add(new Method(retour.access, retour.type, retour.name));
                     SkipBloc(line, '{', '}', reader);
                     continue;
                 }
@@ -220,7 +138,7 @@ namespace CSharpClassViewer
         }
         bool MethodExists(string name)
         {
-            foreach (Method m in currentClass.methods)
+            foreach (Method m in current.methods)
                 if (m.name == name)
                     return true;
             return false;
@@ -284,7 +202,7 @@ namespace CSharpClassViewer
                 }
             return false;
         }
-        public LineStruct ParseLine(string s, CSharpClass csc)
+        public LineStruct ParseLine(string s, CSharpClassOrStruct csc)
         {
             LineStruct retour = new();
             retour.access = "private";

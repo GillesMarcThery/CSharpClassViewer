@@ -86,8 +86,10 @@ namespace CSharpClassViewer
             return access + " " + name;
         }
     }
-    public class CSharpClass
+    public enum MetaType { Class = 0, Struct }
+    public class CSharpClassOrStruct
     {
+        public MetaType metaType;
         public string myNamespace;
         public string name;
         public string access;
@@ -97,31 +99,9 @@ namespace CSharpClassViewer
         public List<Property> properties = [];
         public Constructor constructor;
         public List<Method> methods = [];
-        public CSharpClass(string myNamespace, string name, string access, bool partial)
+        public CSharpClassOrStruct(MetaType mt, string myNamespace, string name, string access, bool partial)
         {
-            this.myNamespace = myNamespace;
-            this.name = name;
-            this.access = access;
-            this.isPartial = partial;
-        }
-        public override string ToString()
-        {
-            return access + " " + name;
-        }
-    }
-    public class CSharpStruct
-    {
-        public string myNamespace;
-        public string name;
-        public string access;
-        public bool isPartial = false;
-        public List<Event> events = [];
-        public List<Field> fields = [];
-        public List<Property> properties = [];
-        public Constructor constructor;
-        public List<Method> methods = [];
-        public CSharpStruct(string myNamespace, string name, string access, bool partial)
-        {
+            this.metaType = mt;
             this.myNamespace = myNamespace;
             this.name = name;
             this.access = access;

@@ -60,9 +60,9 @@ namespace CSharpClassViewer
             Buildtreeview(TV_root, csf.myStructs);
             Buildtreeview(TV_root, csf.myClasses);
         }
-        private void Buildtreeview(TreeViewItem TV_Item, List<CSharpClass> myClasses)
+        private void Buildtreeview(TreeViewItem TV_Item, List<CSharpClassOrStruct> myClassesOrStructs)
         {
-            foreach (CSharpClass csc in myClasses)
+            foreach (CSharpClassOrStruct csc in myClassesOrStructs)
             {
                 TreeViewItem item = new();
                 item.Header = csc.access + " " + csc.name + " in " + csc.myNamespace;
@@ -114,65 +114,10 @@ namespace CSharpClassViewer
                 }
             }
         }
-        private void Buildtreeview(TreeViewItem TV_Item, List<CSharpStruct> myStructs)
-        {
-            foreach (CSharpStruct css in myStructs)
-            {
-                TreeViewItem item = new();
-                item.Header = css.access + " " + css.name + " in " + css.myNamespace;
-                TV_Item.Items.Add(item);
-                if (css.fields.Count > 0)
-                {
-                    TreeViewItem tv_fields = new();
-                    tv_fields.Header = "fields";
-                    item.Items.Add(tv_fields);
-                    foreach (Field f in css.fields)
-                    {
-                        TreeViewItem tvi = new();
-                        tvi.Header = f.access + " " + f.type + " " + f.name;
-                        tv_fields.Items.Add(tvi);
-                    }
-                }
-                if (css.properties.Count > 0)
-                {
-                    TreeViewItem tv_property = new();
-                    tv_property.Header = "properties";
-                    item.Items.Add(tv_property);
-                    foreach (Property p in css.properties)
-                    {
-                        TreeViewItem tvi = new();
-                        tvi.Header = p.access + " " + p.type + " " + p.name;
-                        tv_property.Items.Add(tvi);
-                    }
-                }
-                if (css.constructor.name != null)
-                {
-                    TreeViewItem tv_constructor = new();
-                    tv_constructor.Header = "constructor";
-                    item.Items.Add(tv_constructor);
-                    TreeViewItem tvi = new();
-                    tvi.Header = css.constructor.access + " " + css.constructor.name;
-                    tv_constructor.Items.Add(tvi);
-                }
-                if (css.methods.Count > 0)
-                {
-                    TreeViewItem tv_method = new();
-                    tv_method.Header = "methods";
-                    item.Items.Add(tv_method);
-                    foreach (Method m in css.methods)
-                    {
-                        TreeViewItem tvi = new();
-                        tvi.Header = m.access + " " + m.type + " " + m.name;
-                        tv_method.Items.Add(tvi);
-                    }
-                }
-            }
-        }
         private void OpenDirectory_Click(object sender, RoutedEventArgs e)
         {
             string[] allfiles;
             List<CSharpFile> mycSharpFiles = [];
-
             var folderDialog = new OpenFolderDialog
             {
                 Title = "Select Folder",

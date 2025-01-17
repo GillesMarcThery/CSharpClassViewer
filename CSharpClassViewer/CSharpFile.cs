@@ -65,7 +65,7 @@ namespace CSharpClassViewer
                 if (line.Contains("//"))
                     line = line.Substring(0, line.IndexOf("//"));
                 line = line.Trim();
-                Debug.WriteLine(line);
+                //Debug.WriteLine(line);
 
                 if (line.Length < 2)
                     continue;

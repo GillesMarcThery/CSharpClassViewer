@@ -65,8 +65,12 @@ namespace CSharpClassViewer
             foreach (CSharpClassOrStruct csc in myClassesOrStructs)
             {
                 TreeViewItem item = new();
-                item.Header = csc.access + " " + csc.name + " in " + csc.myNamespace;
+                if (csc.metaType == MetaType.Class)
+                    item.Header = csc.access + " class " + csc.name + " in " + csc.myNamespace;
+                else
+                    item.Header = csc.access + " struct " + csc.name + " in " + csc.myNamespace;
                 TV_Item.Items.Add(item);
+
                 if (csc.fields.Count > 0)
                 {
                     TreeViewItem tv_fields = new();

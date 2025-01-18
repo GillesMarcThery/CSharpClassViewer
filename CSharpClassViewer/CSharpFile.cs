@@ -124,6 +124,10 @@ namespace CSharpClassViewer
                 }
                 if (retour.isMethod)
                 {
+                    if (retour.name == "IndexOfFermerParenthèses")
+                    {
+                        int a = 0;
+                    }
                     if (current != null)
                     {
                         if (!MethodExists(retour.name))
@@ -143,6 +147,13 @@ namespace CSharpClassViewer
                     return true;
             return false;
         }
+        /// <summary>
+        /// Passe un bloc un ensemble de lignes entre begin et end
+        /// </summary>
+        /// <param name="line"></param>
+        /// <param name="begin"></param>
+        /// <param name="end"></param>
+        /// <param name="reader"></param>
         void SkipBloc(string line, char begin, char end, StringReader reader)
         {
             int countOpen = 0;
@@ -156,8 +167,27 @@ namespace CSharpClassViewer
                     if (countOpen == 0) return;
                 }
                 line = reader.ReadLine();
+                line = RemoveSubstringOrChar(line);
                 //Debug.WriteLine(line);
             } while (line != null);
+        }
+        /// <summary>
+        /// retire une sous-chaine ou un caractère d'une chaine
+        /// </summary>
+        /// <param name="s"></param>
+        /// <returns></returns>
+        string RemoveSubstringOrChar(string s)
+        {
+            string result = "";
+            bool ignore = false;
+            for (int i = 0; i < s.Length; i++)
+            {
+                if (s[i] == '"' || s[i] == '\'')
+                    ignore = !ignore;
+                if (!ignore & s[i] != '"' & s[i] != '\'')
+                    result += s[i];
+            }
+            return result;
         }
         public struct LineStruct
         {

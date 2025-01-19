@@ -57,63 +57,69 @@ namespace CSharpClassViewer
             treeView.Items.Add(TV_root);
 
             // Et on contruit l'arbre
-            Buildtreeview(TV_root, csf.myStructs);
-            Buildtreeview(TV_root, csf.myClasses);
+            foreach (string ns in csf.myNamespaces)
+            {
+                TreeViewItem TV_NS = new();
+                TV_NS.Header = ns;
+                TV_root.Items.Add(TV_NS);
+                Buildtreeview(TV_NS, csf.myStructs, ns);
+                Buildtreeview(TV_NS, csf.myClasses, ns);
+            }
         }
-        private void Buildtreeview(TreeViewItem TV_Item, List<CSharpClassOrStruct> myClassesOrStructs)
+        private void Buildtreeview(TreeViewItem TV_Item, List<CSharpClassOrStruct> myClassesOrStructs, string ns)
         {
             foreach (CSharpClassOrStruct csc in myClassesOrStructs)
             {
-                TreeViewItem item = new();
-                if (csc.metaType == MetaType.Class)
-                    item.Header = csc.access + " class " + csc.name + " in " + csc.myNamespace;
-                else
-                    item.Header = csc.access + " struct " + csc.name + " in " + csc.myNamespace;
-                TV_Item.Items.Add(item);
+                if (csc.myNamespace == ns)
+                {
+                    TreeViewItem item = new();
+                    item.Header = csc.ToString();
+                    TV_Item.Items.Add(item);
 
-                if (csc.fields.Count > 0)
-                {
-                    TreeViewItem tv_fields = new();
-                    tv_fields.Header = "fields";
-                    item.Items.Add(tv_fields);
-                    foreach (Field f in csc.fields)
+                    if (csc.fields.Count > 0)
                     {
-                        TreeViewItem tvi = new();
-                        tvi.Header = f.access + " " + f.type + " " + f.name;
-                        tv_fields.Items.Add(tvi);
+                        TreeViewItem tv_fields = new();
+                        tv_fields.Header = "fields";
+                        item.Items.Add(tv_fields);
+                        foreach (Field f in csc.fields)
+                        {
+                            TreeViewItem tvi = new();
+                            tvi.Header = f.ToString();
+                            tv_fields.Items.Add(tvi);
+                        }
                     }
-                }
-                if (csc.properties.Count > 0)
-                {
-                    TreeViewItem tv_property = new();
-                    tv_property.Header = "properties";
-                    item.Items.Add(tv_property);
-                    foreach (Property p in csc.properties)
+                    if (csc.properties.Count > 0)
                     {
-                        TreeViewItem tvi = new();
-                        tvi.Header = p.access + " " + p.type + " " + p.name;
-                        tv_property.Items.Add(tvi);
+                        TreeViewItem tv_property = new();
+                        tv_property.Header = "properties";
+                        item.Items.Add(tv_property);
+                        foreach (Property p in csc.properties)
+                        {
+                            TreeViewItem tvi = new();
+                            tvi.Header = p.ToString();
+                            tv_property.Items.Add(tvi);
+                        }
                     }
-                }
-                if (csc.constructor.name != null)
-                {
-                    TreeViewItem tv_constructor = new();
-                    tv_constructor.Header = "constructor";
-                    item.Items.Add(tv_constructor);
-                    TreeViewItem tvi = new();
-                    tvi.Header = csc.constructor.access + " " + csc.constructor.name;
-                    tv_constructor.Items.Add(tvi);
-                }
-                if (csc.methods.Count > 0)
-                {
-                    TreeViewItem tv_method = new();
-                    tv_method.Header = "methods";
-                    item.Items.Add(tv_method);
-                    foreach (Method m in csc.methods)
+                    if (csc.constructor.name != null)
                     {
+                        TreeViewItem tv_constructor = new();
+                        tv_constructor.Header = "constructor";
+                        item.Items.Add(tv_constructor);
                         TreeViewItem tvi = new();
-                        tvi.Header = m.access + " " + m.type + " " + m.name;
-                        tv_method.Items.Add(tvi);
+                        tvi.Header = csc.ToString();
+                        tv_constructor.Items.Add(tvi);
+                    }
+                    if (csc.methods.Count > 0)
+                    {
+                        TreeViewItem tv_method = new();
+                        tv_method.Header = "methods";
+                        item.Items.Add(tv_method);
+                        foreach (Method m in csc.methods)
+                        {
+                            TreeViewItem tvi = new();
+                            tvi.Header = m.ToString();
+                            tv_method.Items.Add(tvi);
+                        }
                     }
                 }
             }
@@ -155,13 +161,29 @@ namespace CSharpClassViewer
                     TreeViewItem TV_File = new();
                     TV_File.Header = csf.filename.Split('\\').Last();
                     //TV_root.MouseRightButtonDown += TV_Item_MouseRightButtonDown;
+                    TV_File.MouseDoubleClick += TV_File_MouseDoubleClick;
+                    TV_File.Tag = csf;
                     TV_root.Items.Add(TV_File);
-                    Debug.WriteLine(csf.ToString());
+                    //Debug.WriteLine(csf.ToString());
+
                     // Et on contruit l'arbre
-                    Buildtreeview(TV_File, csf.myStructs);
-                    Buildtreeview(TV_File, csf.myClasses);
+                    foreach (string ns in csf.myNamespaces)
+                    {
+                        TreeViewItem TV_NS = new();
+                        TV_NS.Header = ns;
+                        TV_File.Items.Add(TV_NS);
+                        Buildtreeview(TV_NS, csf.myStructs, ns);
+                        Buildtreeview(TV_NS, csf.myClasses, ns);
+                    }
                 }
             }
+        }
+
+        private void TV_File_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            TreeViewItem tvi = (TreeViewItem)sender;
+            CSharpFile csf = (CSharpFile)tvi.Tag;
+            textBox.Text = csf.fileContents;
         }
     }
 }

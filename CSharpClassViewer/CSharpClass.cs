@@ -6,110 +6,123 @@ using System.Threading.Tasks;
 
 namespace CSharpClassViewer
 {
-    public struct Event
+    public struct Event(string access, string type, string name)
     {
-        public string name;
-        public string access;
-        public string type;
-        public Event(string access, string type, string name)
-        {
-            this.name = name;
-            this.access = access;
-            this.type = type;
-        }
-        public override string ToString()
+        public string name = name;
+        public string access = access;
+        public string type = type;
+
+        public override readonly string ToString()
         {
             return access + " " + type + " " + name;
         }
     }
-    public struct Property
+    public struct Property(bool isStatic, string access, string type, string name)
     {
-        public string name;
-        public string access;
-        public string type;
-        public Property(string access, string type, string name)
+        public string name = name;
+        public string access = access;
+        public string type = type;
+        public bool isStatic = isStatic;
+        public override readonly string ToString()
         {
-            this.name = name;
-            this.access = access;
-            this.type = type;
-        }
-        public override string ToString()
-        {
-            return access + " " + type + " " + name;
+            string retour = access + " ";
+
+            if (isStatic)
+                retour += "static ";
+            retour += type + " ";
+            retour += name;
+            return retour;
         }
     }
-    public struct Field
+    public struct Field(bool isStatic, string access, string type, string name, bool isConst)
     {
-        public string name;
-        public string access;
-        public string type;
-        public bool isConst;
-        public Field(string access, string type, string name, bool isConst)
+        public string name = name;
+        public string access = access;
+        public string type = type;
+        public bool isConst = isConst;
+        public bool isStatic = isStatic;
+        public override readonly string ToString()
         {
-            this.name = name;
-            this.access = access;
-            this.type = type;
-            this.isConst = isConst;
-        }
-        public override string ToString()
-        {
-            return access + " " + type + " " + name;
+            string retour = access + " ";
+
+            if (isStatic)
+                retour += "static ";
+            if (isConst)
+                retour += "const ";
+            retour += type + " ";
+            retour += name;
+            return retour;
         }
     }
-    public struct Method
+    public struct Method(bool isStatic, string access, string type, string name)
     {
-        public string name;
-        public string access;
-        public string type;
-        public Method(string access, string type, string name)
+        public string name = name;
+        public string access = access;
+        public string type = type;
+        public bool isStatic = isStatic;
+        public override readonly string ToString()
         {
-            this.name = name;
-            this.access = access;
-            this.type = type;
-        }
-        public override string ToString()
-        {
-            return access + " " + type + " " + name;
+            string retour = access + " ";
+
+            if (isStatic)
+                retour += "static ";
+            retour += type + " ";
+            retour += name;
+            return retour;
         }
     }
-    public struct Constructor
+    public struct Constructor(bool isStatic, string access, string name)
     {
-        public string name;
-        public string access;
-        public Constructor(string access, string name)
+        public string name = name;
+        public string access = access;
+        public bool isStatic = isStatic;
+        public override readonly string ToString()
         {
-            this.name = name;
-            this.access = access;
-        }
-        public override string ToString()
-        {
-            return access + " " + name;
+            string retour = access + " ";
+
+            if (isStatic)
+                retour += "static ";
+            retour += name;
+            return retour;
         }
     }
     public enum MetaType { Class = 0, Struct }
-    public class CSharpClassOrStruct
+    public class CSharpClassOrStruct(bool isStatic, MetaType mt, string myNamespace, string derivedFrom, string name, string access, bool partial)
     {
-        public MetaType metaType;
-        public string myNamespace;
-        public string name;
-        public string access;
-        public bool isPartial = false;
+        public MetaType metaType = mt;
+        public string myNamespace = myNamespace;
+        public string derivedFrom = derivedFrom;
+        public string name = name;
+        public string access = access;
+        public bool isPartial = partial;
+        public bool isStatic = isStatic;
         public List<Event> events = [];
         public List<Field> fields = [];
         public List<Property> properties = [];
         public Constructor constructor;
         public List<Method> methods = [];
-        public CSharpClassOrStruct(MetaType mt, string myNamespace, string name, string access, bool partial)
-        {
-            this.metaType = mt;
-            this.myNamespace = myNamespace;
-            this.name = name;
-            this.access = access;
-            this.isPartial = partial;
-        }
+
         public override string ToString()
         {
-            return access + " " + name;
+            string retour = access + " ";
+
+            if (isStatic)
+                retour += "static ";
+            if (isPartial)
+                retour += "partial ";
+            switch (metaType)
+            {
+                case MetaType.Class:
+                    retour += "class ";
+                    break;
+                case MetaType.Struct:
+                    retour += "struct ";
+                    break;
+            }
+            retour += name;
+            if (derivedFrom != "")
+                retour += " : " + derivedFrom;
+            return retour;
         }
     }
 }

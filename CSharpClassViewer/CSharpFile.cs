@@ -21,10 +21,11 @@ namespace CSharpClassViewer
 {
     public class CSharpFile
     {
-        private string? fileContents;
-        public string filename;
-        string current_namespace;
-        CSharpClassOrStruct current;
+        public string fileContents="";
+        public string? filename;
+        string current_namespace="";
+        CSharpClassOrStruct? current;
+        public List<string> myNamespaces = [];
         public List<CSharpClassOrStruct> myClasses = [];
         public List<CSharpClassOrStruct> myStructs = [];
         public bool Load(string filename)
@@ -63,7 +64,7 @@ namespace CSharpClassViewer
             {
                 line = Regex.Replace(line, @"\s+", " ");
                 if (line.Contains("//"))
-                    line = line.Substring(0, line.IndexOf("//"));
+                    line = line[..line.IndexOf("//")];
                 line = line.Trim();
                 //Debug.WriteLine(line);
 
@@ -83,6 +84,7 @@ namespace CSharpClassViewer
                 if (retour.isNameSpace)
                 {
                     current_namespace = retour.name;
+                    myNamespaces.Add(retour.name);
                     continue;
                 }
                 if (retour.isEnum)
@@ -92,49 +94,43 @@ namespace CSharpClassViewer
                 }
                 if (retour.isClass)
                 {
-                    current = new CSharpClassOrStruct(MetaType.Class, current_namespace, retour.name, retour.access, retour.isPartial);
+                    current = new CSharpClassOrStruct(retour.isStatic, MetaType.Class, current_namespace, retour.derivedFrom, retour.name, retour.access, retour.isPartial);
                     myClasses.Add(current);
                     continue;
                 }
                 if (retour.isStruct)
                 {
-                    current = new CSharpClassOrStruct(MetaType.Struct, current_namespace, retour.name, retour.access, retour.isPartial);
+                    current = new CSharpClassOrStruct(retour.isStatic, MetaType.Struct, current_namespace, retour.derivedFrom, retour.name, retour.access, retour.isPartial);
                     myStructs.Add(current);
                     continue;
                 }
                 if (retour.isField)
                 {
-                    if (current != null)
-                        current.fields.Add(new Field(retour.access, retour.type, retour.name, retour.isConst));
+                    current?.fields.Add(new Field(retour.isStatic, retour.access, retour.type, retour.name, retour.isConst));
                     continue;
                 }
                 if (retour.isProperty)
                 {
-                    if (current != null)
-                        current.properties.Add(new Property(retour.access, retour.type, retour.name));
+                    current?.properties.Add(new Property(retour.isStatic, retour.access, retour.type, retour.name));
                     SkipBloc(line, '{', '}', reader);
                     continue;
                 }
                 if (retour.isConstructor)
                 {
                     if (current != null)
-                        current.constructor = new Constructor(retour.access, retour.name);
+                        current.constructor = new Constructor(retour.isStatic, retour.access, retour.name);
                     SkipBloc(line, '{', '}', reader);
                     continue;
                 }
                 if (retour.isMethod)
                 {
-                    if (retour.name == "IndexOfFermerParenthèses")
-                    {
-                        int a = 0;
-                    }
                     if (current != null)
                     {
                         if (!MethodExists(retour.name))
-                            current.methods.Add(new Method(retour.access, retour.type, retour.name));
+                            current.methods.Add(new Method(retour.isStatic, retour.access, retour.type, retour.name));
+                        else
+                            current.methods.Add(new Method(retour.isStatic, retour.access, retour.type, retour.name));
                     }
-                    else
-                        current.methods.Add(new Method(retour.access, retour.type, retour.name));
                     SkipBloc(line, '{', '}', reader);
                     continue;
                 }
@@ -147,6 +143,7 @@ namespace CSharpClassViewer
                     return true;
             return false;
         }
+
         /// <summary>
         /// Passe un bloc un ensemble de lignes entre begin et end
         /// </summary>
@@ -154,7 +151,7 @@ namespace CSharpClassViewer
         /// <param name="begin"></param>
         /// <param name="end"></param>
         /// <param name="reader"></param>
-        void SkipBloc(string line, char begin, char end, StringReader reader)
+        static void SkipBloc(string line, char begin, char end, StringReader reader)
         {
             int countOpen = 0;
             do
@@ -171,12 +168,13 @@ namespace CSharpClassViewer
                 //Debug.WriteLine(line);
             } while (line != null);
         }
+
         /// <summary>
         /// retire une sous-chaine ou un caractère d'une chaine
         /// </summary>
         /// <param name="s"></param>
         /// <returns></returns>
-        string RemoveSubstringOrChar(string s)
+        static string RemoveSubstringOrChar(string s)
         {
             string result = "";
             bool ignore = false;
@@ -207,8 +205,10 @@ namespace CSharpClassViewer
             public string access;
             public string type;
             public string name;
+            public string derivedFrom;
         }
-        bool SearchType(Collection<string> myCollection, out int index)
+
+        static bool SearchType(Collection<string> myCollection, out int index)
         {
             index = -1;
             for (int i = 0; i < myCollection.Count; i++)
@@ -221,7 +221,8 @@ namespace CSharpClassViewer
                 }
             return false;
         }
-        bool SearchAccess(Collection<string> myCollection, out int index)
+
+        static bool SearchAccess(Collection<string> myCollection, out int index)
         {
             index = -1;
             for (int i = 0; i < myCollection.Count; i++)
@@ -232,12 +233,11 @@ namespace CSharpClassViewer
                 }
             return false;
         }
-        public LineStruct ParseLine(string s, CSharpClassOrStruct csc)
+        public static LineStruct ParseLine(string s, CSharpClassOrStruct? csc)
         {
             LineStruct retour = new();
             retour.access = "private";
-            int index;
-            Collection<string> collection = new();
+            Collection<string> collection = [];
 
             string[] tokens = s.Split(' ');
             foreach (string s1 in tokens)
@@ -279,7 +279,7 @@ namespace CSharpClassViewer
                 retour.name = collection[1];
                 return retour;
             }
-            if (SearchAccess(collection, out index))
+            if (SearchAccess(collection, out int index))
             {
                 retour.access = collection[index];
                 collection.RemoveAt(index);
@@ -293,6 +293,8 @@ namespace CSharpClassViewer
             {
                 retour.isClass = true;
                 retour.name = collection[1];
+                if (collection.Contains(":"))
+                    retour.derivedFrom = collection[collection.Count-1];
                 return retour;
             }
             if (collection.Contains("enum"))
@@ -367,4 +369,29 @@ namespace CSharpClassViewer
         //        public event PropertyChangedEventHandler PropertyChanged;
         //        Methode de même nom
     }
+    //class A
+    //{
+    //    public string name;
+    //    protected string type;
+    //    int u;
+    //    public int V { get { return u; } }
+    //    void dd ()
+    //    {
+    //        type = "kk";
+    //    }
+    //}
+    //class B: A {
+    //    public string name1;
+    //    public string type1;
+    //    int u1;
+    //    void eee ()
+    //    {
+    //        A a = new();
+    //        a.
+    //        type = "ff";
+    //        name = "";
+    //        u = 0;
+    //        int p = V;
+    //    }
+    //}
 }
